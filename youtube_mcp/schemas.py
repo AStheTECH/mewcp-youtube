@@ -43,17 +43,6 @@ class YouTubeResourceResponse(TypedDict, total=False):
     status: dict[str, Any]
 
 
-class OAuthTokenData(TypedDict, total=False):
-    """OAuth token payload for Google API credentials."""
-
-    token: str
-    refresh_token: str
-    token_uri: str
-    client_id: str
-    client_secret: str
-    scopes: list[str]
-
-
 ListToolResponse = YouTubeListResponse | ToolError
 ResourceToolResponse = YouTubeResourceResponse | ToolError
 MessageToolResponse = MessageResponse | ToolError

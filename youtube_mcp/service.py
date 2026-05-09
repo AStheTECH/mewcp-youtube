@@ -1,31 +1,19 @@
 import logging
-from typing import Any
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-
-from .schemas import OAuthTokenData
+from fastmcp_credentials import get_credentials
 
 logger = logging.getLogger("youtube-mcp-server")
 
 
-def get_token_data(oauth_token: OAuthTokenData) -> dict[str, Any]:
-    """Normalize access token dictionary for google.oauth2.credentials.Credentials."""
-    return {
-        "token": oauth_token.get("token"),
-        "refresh_token": oauth_token.get("refresh_token"),
-        "token_uri": oauth_token.get("token_uri") or "https://oauth2.googleapis.com/token",
-        "client_id": oauth_token.get("client_id"),
-        "client_secret": oauth_token.get("client_secret"),
-        "scopes": oauth_token.get("scopes"),
-    }
-
-
-def get_service(oauth_token: OAuthTokenData):
-    """Create YouTube service with provided access token."""
-    auth_data = get_token_data(oauth_token)
+def get_service():
+    """Create YouTube service using credentials injected by fastmcp-credentials."""
+    cred = get_credentials()
+    if not cred.access_token:
+        raise ValueError("No OAuth access token available in credentials")
     logger.info("Creating YouTube API service with provided access token")
-    creds = Credentials(**auth_data)
+    creds = Credentials(token=cred.access_token, scopes=cred.scopes)
     service = build("youtube", "v3", credentials=creds)
     logger.info("YouTube API service created successfully")
     return service

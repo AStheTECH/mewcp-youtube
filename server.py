@@ -4,6 +4,7 @@
 import logging
 
 from fastmcp import FastMCP
+from fastmcp_credentials import CredentialMiddleware, HeaderCredentialBackend
 
 from youtube_mcp.cli import parse_args
 from youtube_mcp.config import configure_logging
@@ -12,7 +13,10 @@ from youtube_mcp.tools import register_tools
 configure_logging()
 logger = logging.getLogger("youtube-mcp-server")
 
-mcp = FastMCP("CL YouTube MCP Server")
+mcp = FastMCP(
+    "CL YouTube MCP Server",
+    middleware=[CredentialMiddleware(HeaderCredentialBackend(), "oauth")],
+)
 register_tools(mcp)
 
 # Expose ASGI app for hosting platform's (e.g. Vercel) Python runtime.
