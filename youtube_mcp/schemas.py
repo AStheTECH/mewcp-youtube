@@ -124,3 +124,50 @@ class MessageData(BaseModel):
 
 class RateVideoResult(ToolResult):
     data: MessageData | None = None
+
+
+# ---------------------------------------------------------------------------
+# Transcript data
+# Used by: get_video_transcript, list_video_transcripts
+# ---------------------------------------------------------------------------
+
+class TranscriptSegment(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    text: str
+    start: float
+    duration: float
+
+
+class TranscriptData(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    video_id: str
+    language: str
+    is_generated: bool
+    segments: list[TranscriptSegment]
+    full_text: str
+
+
+class TranscriptTrack(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    language: str
+    language_code: str
+    is_generated: bool
+    is_translatable: bool
+
+
+class TranscriptListData(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    video_id: str
+    tracks: list[TranscriptTrack]
+
+
+class GetVideoTranscriptResult(ToolResult):
+    data: TranscriptData | None = None
+
+
+class ListVideoTranscriptsResult(ToolResult):
+    data: TranscriptListData | None = None
