@@ -54,7 +54,7 @@ def register_channels_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=True),
     )
     def get_my_playlists(
-        max_results: int = Field(default=25, description="Maximum playlists to return (capped at 50)"),
+        max_results: int = Field(default=25, description="Maximum playlists to return (capped at 50). Defaults to 25."),
     ) -> GetMyPlaylistsResult:
         tlog = ToolLogger(logger, "get_my_playlists")
         try:
@@ -78,7 +78,7 @@ def register_channels_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=True),
     )
     def get_my_subscriptions(
-        max_results: int = Field(default=25, description="Maximum subscriptions to return (capped at 50)"),
+        max_results: int = Field(default=25, description="Maximum subscriptions to return (capped at 50). Defaults to 25."),
     ) -> GetMySubscriptionsResult:
         tlog = ToolLogger(logger, "get_my_subscriptions")
         try:
@@ -102,7 +102,7 @@ def register_channels_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=True),
     )
     def get_my_activities(
-        max_results: int = Field(default=25, description="Maximum activities to return (capped at 50)"),
+        max_results: int = Field(default=25, description="Maximum activities to return (capped at 50). Defaults to 25."),
     ) -> GetMyActivitiesResult:
         tlog = ToolLogger(logger, "get_my_activities")
         try:
@@ -126,7 +126,7 @@ def register_channels_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True),
     )
     def subscribe_to_channel(
-        channel_id: str = Field(..., description="Channel ID to subscribe to"),
+        channel_id: str = Field(..., description="Channel ID to subscribe to. Required."),
     ) -> SubscribeToChannelResult:
         tlog = ToolLogger(logger, "subscribe_to_channel")
         try:

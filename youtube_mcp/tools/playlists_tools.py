@@ -30,9 +30,9 @@ def register_playlists_tools(mcp: FastMCP) -> None:
         ),
     )
     def get_playlist_items(
-        playlist_id: str = Field(..., description="YouTube playlist ID"),
+        playlist_id: str = Field(..., description="YouTube playlist ID. Required."),
         max_results: int = Field(
-            default=50, description="Maximum items to return (capped at 50)"
+            default=50, description="Maximum items to return (capped at 50). Defaults to 50."
         ),
     ) -> GetPlaylistItemsResult:
         tlog = ToolLogger(logger, "get_playlist_items")
@@ -58,13 +58,13 @@ def register_playlists_tools(mcp: FastMCP) -> None:
         ),
     )
     def create_playlist(
-        title: str = Field(..., description="Playlist title"),
+        title: str = Field(..., description="Playlist title. Required."),
         description: str = Field(
-            default="", description="Optional playlist description"
+            default="", description="Optional playlist description. Defaults to empty string."
         ),
         privacy_status: str = Field(
             default="private",
-            description="Privacy setting. Common values: `private`, `public`, `unlisted`",
+            description="Privacy setting. Common values: `private`, `public`, `unlisted`. Defaults to `private`.",
         ),
     ) -> CreatePlaylistResult:
         tlog = ToolLogger(logger, "create_playlist")
@@ -92,8 +92,8 @@ def register_playlists_tools(mcp: FastMCP) -> None:
         ),
     )
     def add_video_to_playlist(
-        playlist_id: str = Field(..., description="Target playlist ID"),
-        video_id: str = Field(..., description="Video ID to insert"),
+        playlist_id: str = Field(..., description="Target playlist ID. Required."),
+        video_id: str = Field(..., description="Video ID to insert. Required."),
     ) -> AddVideoToPlaylistResult:
         tlog = ToolLogger(logger, "add_video_to_playlist")
         try:

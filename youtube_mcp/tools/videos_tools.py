@@ -33,11 +33,11 @@ def register_videos_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=True),
     )
     def search_videos(
-        query: str = Field(..., description="Search query text"),
-        max_results: int = Field(default=10, description="Maximum videos to return (capped at 50)"),
+        query: str = Field(..., description="Search query text. Required."),
+        max_results: int = Field(default=10, description="Maximum videos to return (capped at 50). Defaults to 10."),
         order: str = Field(
             default="relevance",
-            description="Sort order, Common values: `relevance`, `date`, `rating`, `title`, `videoCount`, `viewCount`",
+            description="Sort order. Common values: `relevance`, `date`, `rating`, `title`, `videoCount`, `viewCount`. Defaults to `relevance`.",
         ),
     ) -> SearchVideosResult:
         tlog = ToolLogger(logger, "search_videos")
@@ -62,7 +62,7 @@ def register_videos_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=True),
     )
     def get_video_details(
-        video_id: str = Field(..., description="YouTube video ID"),
+        video_id: str = Field(..., description="YouTube video ID. Required."),
     ) -> GetVideoDetailsResult:
         tlog = ToolLogger(logger, "get_video_details")
         try:
@@ -83,8 +83,8 @@ def register_videos_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=True),
     )
     def get_channel_videos(
-        channel_id: str = Field(..., description="YouTube channel ID"),
-        max_results: int = Field(default=25, description="Maximum videos to return (capped at 50)"),
+        channel_id: str = Field(..., description="YouTube channel ID. Required."),
+        max_results: int = Field(default=25, description="Maximum videos to return (capped at 50). Defaults to 25."),
     ) -> GetChannelVideosResult:
         tlog = ToolLogger(logger, "get_channel_videos")
         try:
@@ -108,11 +108,11 @@ def register_videos_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=True),
     )
     def get_video_comments(
-        video_id: str = Field(..., description="YouTube video ID"),
-        max_results: int = Field(default=20, description="Maximum comments to return (capped at 100)"),
+        video_id: str = Field(..., description="YouTube video ID. Required."),
+        max_results: int = Field(default=20, description="Maximum comments to return (capped at 100). Defaults to 20."),
         order: str = Field(
             default="relevance",
-            description="Comment order. Supported values: `relevance`, `time`",
+            description="Comment order. Supported values: `relevance`, `time`. Defaults to `relevance`.",
         ),
     ) -> GetVideoCommentsResult:
         tlog = ToolLogger(logger, "get_video_comments")
@@ -136,8 +136,8 @@ def register_videos_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True),
     )
     def post_comment(
-        video_id: str = Field(..., description="YouTube video ID"),
-        text: str = Field(..., description="Comment text content"),
+        video_id: str = Field(..., description="YouTube video ID. Required."),
+        text: str = Field(..., description="Comment text content. Required."),
     ) -> PostCommentResult:
         tlog = ToolLogger(logger, "post_comment")
         try:
@@ -167,8 +167,8 @@ def register_videos_tools(mcp: FastMCP) -> None:
         annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True),
     )
     def rate_video(
-        video_id: str = Field(..., description="YouTube video ID"),
-        rating: Literal["like", "dislike", "none"] = Field(..., description="Rating value"),
+        video_id: str = Field(..., description="YouTube video ID. Required."),
+        rating: Literal["like", "dislike", "none"] = Field(..., description="Rating value: `like`, `dislike`, or `none` (removes rating). Required."),
     ) -> RateVideoResult:
         tlog = ToolLogger(logger, "rate_video")
         try:
