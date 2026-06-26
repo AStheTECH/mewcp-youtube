@@ -1,48 +1,126 @@
-from typing import Any, TypedDict
+"""Pydantic schemas for MewCP YouTube MCP Server."""
+
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict
 
 
-class ToolError(TypedDict):
-    """Standard error shape for tool responses."""
+# ---------------------------------------------------------------------------
+# Base classes
+# ---------------------------------------------------------------------------
 
-    error: str
+class ToolError(BaseModel):
+    code: str
+    message: str
+    details: Any = None
 
 
-class MessageResponse(TypedDict):
-    """Simple message response shape."""
+class ToolResult(BaseModel):
+    success: bool
+    statusCode: int
+    retriable: bool = False
+    retry_after_seconds: int | None = None
+    error: ToolError | None = None
+
+
+# ---------------------------------------------------------------------------
+# YouTube list response data
+# Used by: get_my_channel, get_my_playlists, search_videos, get_video_details,
+#          get_channel_videos, get_playlist_items, get_video_comments,
+#          get_my_subscriptions, get_my_activities
+# ---------------------------------------------------------------------------
+
+class YouTubeListData(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    kind: str | None = None
+    etag: str | None = None
+    nextPageToken: str | None = None
+    prevPageToken: str | None = None
+    items: list[dict[str, Any]] | None = None
+    pageInfo: dict[str, Any] | None = None
+
+
+class GetMyChannelResult(ToolResult):
+    data: YouTubeListData | None = None
+
+
+class GetMyPlaylistsResult(ToolResult):
+    data: YouTubeListData | None = None
+
+
+class SearchVideosResult(ToolResult):
+    data: YouTubeListData | None = None
+
+
+class GetVideoDetailsResult(ToolResult):
+    data: YouTubeListData | None = None
+
+
+class GetChannelVideosResult(ToolResult):
+    data: YouTubeListData | None = None
+
+
+class GetPlaylistItemsResult(ToolResult):
+    data: YouTubeListData | None = None
+
+
+class GetVideoCommentsResult(ToolResult):
+    data: YouTubeListData | None = None
+
+
+class GetMySubscriptionsResult(ToolResult):
+    data: YouTubeListData | None = None
+
+
+class GetMyActivitiesResult(ToolResult):
+    data: YouTubeListData | None = None
+
+
+# ---------------------------------------------------------------------------
+# YouTube resource response data
+# Used by: create_playlist, add_video_to_playlist, subscribe_to_channel,
+#          post_comment
+# ---------------------------------------------------------------------------
+
+class YouTubeResourceData(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    kind: str | None = None
+    etag: str | None = None
+    id: str | None = None
+    snippet: dict[str, Any] | None = None
+    contentDetails: dict[str, Any] | None = None
+    statistics: dict[str, Any] | None = None
+    status: dict[str, Any] | None = None
+
+
+class CreatePlaylistResult(ToolResult):
+    data: YouTubeResourceData | None = None
+
+
+class AddVideoToPlaylistResult(ToolResult):
+    data: YouTubeResourceData | None = None
+
+
+class SubscribeToChannelResult(ToolResult):
+    data: YouTubeResourceData | None = None
+
+
+class PostCommentResult(ToolResult):
+    data: YouTubeResourceData | None = None
+
+
+# ---------------------------------------------------------------------------
+# Message-only response data
+# Used by: rate_video
+# ---------------------------------------------------------------------------
+
+class MessageData(BaseModel):
+    model_config = ConfigDict(extra="allow")
 
     message: str
 
 
-class YouTubePageInfo(TypedDict):
-    """YouTube pagination metadata."""
-
-    totalResults: int
-    resultsPerPage: int
-
-
-class YouTubeListResponse(TypedDict, total=False):
-    """Common YouTube list response shape."""
-
-    kind: str
-    etag: str
-    nextPageToken: str
-    prevPageToken: str
-    pageInfo: YouTubePageInfo
-    items: list[dict[str, Any]]
-
-
-class YouTubeResourceResponse(TypedDict, total=False):
-    """Common YouTube resource response shape (non-list)."""
-
-    kind: str
-    etag: str
-    id: str
-    snippet: dict[str, Any]
-    contentDetails: dict[str, Any]
-    statistics: dict[str, Any]
-    status: dict[str, Any]
-
-
-ListToolResponse = YouTubeListResponse | ToolError
-ResourceToolResponse = YouTubeResourceResponse | ToolError
-MessageToolResponse = MessageResponse | ToolError
+class RateVideoResult(ToolResult):
+    data: MessageData | None = None
