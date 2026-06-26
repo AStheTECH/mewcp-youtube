@@ -312,6 +312,63 @@ Rate a video (like or dislike).
 
 
 <details>
+<summary><code>get_video_transcript</code> — Fetch the transcript (captions) for a YouTube video</summary>
+
+Fetch the transcript (captions) for a YouTube video as plain text and individual timed segments. Uses auto-generated or manually created captions. Specify preferred languages in priority order; falls back to the first available if none match.
+
+**Inputs:**
+```
+- `video_id` (str, required) — YouTube video ID. Required.
+- `languages` (list[str], optional, default: null) — Preferred language codes in priority order (e.g. ['en', 'fr']). Omit to use the video's default language.
+```
+
+**Output `data` schema:**
+
+```typescript
+{
+  video_id: string;
+  language: string;
+  is_generated: boolean;
+  segments: {
+    text: string;
+    start: number;
+    duration: number;
+  }[];
+  full_text: string;
+}
+```
+
+</details>
+
+
+<details>
+<summary><code>list_video_transcripts</code> — List all available transcript tracks for a YouTube video</summary>
+
+List all available transcript tracks for a YouTube video, including language, language code, whether the track is auto-generated, and whether it can be translated. Use this before get_video_transcript to discover available languages.
+
+**Inputs:**
+```
+- `video_id` (str, required) — YouTube video ID. Required.
+```
+
+**Output `data` schema:**
+
+```typescript
+{
+  video_id: string;
+  tracks: {
+    language: string;
+    language_code: string;
+    is_generated: boolean;
+    is_translatable: boolean;
+  }[];
+}
+```
+
+</details>
+
+
+<details>
 <summary><code>get_playlist_items</code> — Get videos from a specific playlist</summary>
 
 Get videos from a specific playlist.
