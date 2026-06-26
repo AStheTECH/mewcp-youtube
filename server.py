@@ -7,16 +7,25 @@ from fastmcp import FastMCP
 from fastmcp_credentials import CredentialMiddleware, HeaderCredentialBackend
 
 from youtube_mcp.cli import parse_args
-from youtube_mcp.config import configure_logging
+from youtube_mcp.config import SERVER_VERSION, configure_logging
 from youtube_mcp.tools import register_tools
 
 configure_logging()
 logger = logging.getLogger("youtube-mcp-server")
 
-mcp = FastMCP("MewCP YouTube MCP Server",
+mcp = FastMCP(
+    "MewCP YouTube MCP Server",
+    version=SERVER_VERSION,
     middleware=[CredentialMiddleware(HeaderCredentialBackend(), "oauth")],
 )
 register_tools(mcp)
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request):
+    from starlette.responses import JSONResponse
+    return JSONResponse({"status": "ok", "version": SERVER_VERSION})
+
 
 # Expose ASGI app for hosting platform's (e.g. Vercel) Python runtime.
 app = mcp.http_app(path="/mcp", transport="streamable-http", stateless_http=True)
