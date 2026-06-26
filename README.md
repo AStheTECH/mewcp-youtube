@@ -1,47 +1,46 @@
-**Your YouTube channel and content, fully accessible through AI.**
+**Your YouTube, fully accessible through AI.**
 
-A Model Context Protocol (MCP) server that exposes YouTube's Data API for searching videos, managing playlists, reading comments, and interacting with channel content.
+A Model Context Protocol (MCP) server that exposes YouTube's API for searching videos, managing playlists, reading channel data, posting comments, and more.
 
 
 ## Overview
 
-The YouTube MCP Server provides comprehensive access to YouTube via the authenticated user's account:
+The MewCP YouTube MCP Server provides authenticated access to the YouTube Data API v3:
 
-- Search videos, fetch channel info, playlists, and subscriptions
-- Read video details, comments, and channel activity
-- Create playlists, add videos, post comments, rate videos, and subscribe to channels
+- Search and retrieve videos, channel data, and comments
+- Manage playlists: create, browse, and add videos
+- Interact with content: rate videos, post comments, subscribe to channels
 
 Perfect for:
 
-- AI assistants that need to search or retrieve YouTube content on your behalf
-- Automating playlist management and channel organization
-- Building tools that integrate YouTube data into broader workflows
+- Building AI assistants that can search and analyze YouTube content
+- Automating YouTube channel management tasks
+- Integrating YouTube data into workflows and dashboards
 
 
 ## Tools
 
-### Channel & Account
 
 <details>
-<summary><code>get_my_channel</code> — Get authenticated user's channel info</summary>
+<summary><code>get_my_channel</code> — Get the authenticated user's YouTube channel info</summary>
 
-Returns snippet, content details, and statistics for the authenticated user's YouTube channel.
+Get information about the authenticated user's YouTube channel. Returns snippet, contentDetails, and statistics for the channel.
 
 **Inputs:**
 ```
-None
+(no parameters)
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "kind": "youtube#channelListResponse",
-  "items": [{
-    "id": "UC...",
-    "snippet": { "title": "My Channel", "description": "..." },
-    "statistics": { "viewCount": "12000", "subscriberCount": "500" }
-  }]
+  kind: string | null;
+  etag: string | null;
+  nextPageToken: string | null;
+  prevPageToken: string | null;
+  items: object[] | null;
+  pageInfo: object | null;
 }
 ```
 
@@ -51,20 +50,23 @@ None
 <details>
 <summary><code>get_my_playlists</code> — Get playlists from the authenticated user's channel</summary>
 
-Returns playlists owned by the authenticated user with snippet and content details.
+Get playlists from the authenticated user's channel. Returns snippet and contentDetails for each playlist.
 
 **Inputs:**
 ```
-- `max_results` (int, optional) — Maximum playlists to return (max: 50, default: 25)
+- `max_results` (int, optional, default: 25) — Maximum playlists to return (capped at 50). Defaults to 25.
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "kind": "youtube#playlistListResponse",
-  "pageInfo": { "totalResults": 5, "resultsPerPage": 25 },
-  "items": [{ "id": "PL...", "snippet": { "title": "My Playlist", "itemCount": 10 } }]
+  kind: string | null;
+  etag: string | null;
+  nextPageToken: string | null;
+  prevPageToken: string | null;
+  items: object[] | null;
+  pageInfo: object | null;
 }
 ```
 
@@ -72,26 +74,25 @@ Returns playlists owned by the authenticated user with snippet and content detai
 
 
 <details>
-<summary><code>get_my_subscriptions</code> — Get the authenticated user's subscriptions</summary>
+<summary><code>get_my_subscriptions</code> — Get the authenticated user's channel subscriptions</summary>
 
-Returns channels the authenticated user is subscribed to, with snippet and content details.
+Get the authenticated user's channel subscriptions. Returns snippet and contentDetails for each subscription.
 
 **Inputs:**
 ```
-- `max_results` (int, optional) — Maximum subscriptions to return (max: 50, default: 25)
+- `max_results` (int, optional, default: 25) — Maximum subscriptions to return (capped at 50). Defaults to 25.
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "kind": "youtube#subscriptionListResponse",
-  "items": [{
-    "snippet": {
-      "title": "Channel Name",
-      "resourceId": { "channelId": "UC..." }
-    }
-  }]
+  kind: string | null;
+  etag: string | null;
+  nextPageToken: string | null;
+  prevPageToken: string | null;
+  items: object[] | null;
+  pageInfo: object | null;
 }
 ```
 
@@ -101,52 +102,78 @@ Returns channels the authenticated user is subscribed to, with snippet and conte
 <details>
 <summary><code>get_my_activities</code> — Get recent activities on the authenticated user's channel</summary>
 
-Returns recent activity events on the authenticated user's channel such as uploads, likes, and subscriptions.
+Get recent activities on the authenticated user's channel. Returns snippet and contentDetails for each activity.
 
 **Inputs:**
 ```
-- `max_results` (int, optional) — Maximum activities to return (max: 50, default: 25)
+- `max_results` (int, optional, default: 25) — Maximum activities to return (capped at 50). Defaults to 25.
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "kind": "youtube#activityListResponse",
-  "items": [{
-    "snippet": { "type": "upload", "publishedAt": "2024-01-15T..." },
-    "contentDetails": { "upload": { "videoId": "abc123" } }
-  }]
+  kind: string | null;
+  etag: string | null;
+  nextPageToken: string | null;
+  prevPageToken: string | null;
+  items: object[] | null;
+  pageInfo: object | null;
 }
 ```
 
 </details>
 
 
-### Videos
+<details>
+<summary><code>subscribe_to_channel</code> — Subscribe to a YouTube channel</summary>
+
+Subscribe to a YouTube channel. Returns the created subscription resource including snippet details.
+
+**Inputs:**
+```
+- `channel_id` (str, required) — Channel ID to subscribe to. Required.
+```
+
+**Output `data` schema:**
+
+```typescript
+{
+  kind: string | null;
+  etag: string | null;
+  id: string | null;
+  snippet: object | null;
+  contentDetails: object | null;
+  statistics: object | null;
+  status: object | null;
+}
+```
+
+</details>
+
 
 <details>
 <summary><code>search_videos</code> — Search for videos on YouTube</summary>
 
-Searches YouTube for videos matching a query, with configurable sort order and result count.
+Search for videos on YouTube.
 
 **Inputs:**
 ```
-- `query` (string, required) — Search query text
-- `max_results` (int, optional) — Maximum videos to return (max: 50, default: 10)
-- `order` (string, optional) — Sort order: relevance, date, rating, title, videoCount, or viewCount (default: relevance)
+- `query` (str, required) — Search query text. Required.
+- `max_results` (int, optional, default: 10) — Maximum videos to return (capped at 50). Defaults to 10.
+- `order` (str, optional, default: "relevance") — Sort order. Common values: `relevance`, `date`, `rating`, `title`, `videoCount`, `viewCount`. Defaults to `relevance`.
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "kind": "youtube#searchListResponse",
-  "pageInfo": { "totalResults": 1000000 },
-  "items": [{
-    "id": { "videoId": "dQw4w9WgXcQ" },
-    "snippet": { "title": "Video Title", "channelTitle": "Channel Name", "publishedAt": "..." }
-  }]
+  kind: string | null;
+  etag: string | null;
+  nextPageToken: string | null;
+  prevPageToken: string | null;
+  items: object[] | null;
+  pageInfo: object | null;
 }
 ```
 
@@ -154,27 +181,25 @@ Searches YouTube for videos matching a query, with configurable sort order and r
 
 
 <details>
-<summary><code>get_video_details</code> — Get detailed information about a video</summary>
+<summary><code>get_video_details</code> — Get detailed information about a specific video</summary>
 
-Returns full details for a specific video including snippet, content details, statistics, and status.
+Get detailed information about a specific video by ID.
 
 **Inputs:**
 ```
-- `video_id` (string, required) — YouTube video ID (e.g., dQw4w9WgXcQ)
+- `video_id` (str, required) — YouTube video ID. Required.
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "kind": "youtube#videoListResponse",
-  "items": [{
-    "id": "dQw4w9WgXcQ",
-    "snippet": { "title": "...", "description": "...", "publishedAt": "..." },
-    "statistics": { "viewCount": "1500000", "likeCount": "50000" },
-    "contentDetails": { "duration": "PT3M33S" },
-    "status": { "privacyStatus": "public" }
-  }]
+  kind: string | null;
+  etag: string | null;
+  nextPageToken: string | null;
+  prevPageToken: string | null;
+  items: object[] | null;
+  pageInfo: object | null;
 }
 ```
 
@@ -184,23 +209,24 @@ Returns full details for a specific video including snippet, content details, st
 <details>
 <summary><code>get_channel_videos</code> — Get videos from a specific channel</summary>
 
-Returns the most recent videos uploaded to a channel, sorted by date.
+Get videos from a specific channel.
 
 **Inputs:**
 ```
-- `channel_id` (string, required) — YouTube channel ID (e.g., UCxxxxxx)
-- `max_results` (int, optional) — Maximum videos to return (max: 50, default: 25)
+- `channel_id` (str, required) — YouTube channel ID. Required.
+- `max_results` (int, optional, default: 25) — Maximum videos to return (capped at 50). Defaults to 25.
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "kind": "youtube#searchListResponse",
-  "items": [{
-    "id": { "videoId": "abc123" },
-    "snippet": { "title": "Latest Video", "publishedAt": "2024-01-15T..." }
-  }]
+  kind: string | null;
+  etag: string | null;
+  nextPageToken: string | null;
+  prevPageToken: string | null;
+  items: object[] | null;
+  pageInfo: object | null;
 }
 ```
 
@@ -208,52 +234,27 @@ Returns the most recent videos uploaded to a channel, sorted by date.
 
 
 <details>
-<summary><code>get_video_comments</code> — Get comments for a video</summary>
+<summary><code>get_video_comments</code> — Get comments for a specific video</summary>
 
-Returns comment threads for a specific video, with optional ordering by relevance or time.
-
-**Inputs:**
-```
-- `video_id` (string, required) — YouTube video ID
-- `max_results` (int, optional) — Maximum comments to return (max: 100, default: 20)
-- `order` (string, optional) — Comment order: relevance or time (default: relevance)
-```
-
-**Output:**
-
-```json
-{
-  "kind": "youtube#commentThreadListResponse",
-  "items": [{
-    "snippet": {
-      "topLevelComment": {
-        "snippet": { "textDisplay": "Great video!", "likeCount": 42, "authorDisplayName": "..." }
-      },
-      "totalReplyCount": 3
-    }
-  }]
-}
-```
-
-</details>
-
-
-<details>
-<summary><code>rate_video</code> — Like, dislike, or remove a rating from a video</summary>
-
-Rates a video on behalf of the authenticated user.
+Get comments for a specific video.
 
 **Inputs:**
 ```
-- `video_id` (string, required) — YouTube video ID
-- `rating` (string, required) — Rating value: like, dislike, or none
+- `video_id` (str, required) — YouTube video ID. Required.
+- `max_results` (int, optional, default: 20) — Maximum comments to return (capped at 100). Defaults to 20.
+- `order` (str, optional, default: "relevance") — Comment order. Supported values: `relevance`, `time`. Defaults to `relevance`.
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "message": "Video rated as 'like' successfully"
+  kind: string | null;
+  etag: string | null;
+  nextPageToken: string | null;
+  prevPageToken: string | null;
+  items: object[] | null;
+  pageInfo: object | null;
 }
 ```
 
@@ -263,51 +264,25 @@ Rates a video on behalf of the authenticated user.
 <details>
 <summary><code>post_comment</code> — Post a comment on a video</summary>
 
-Posts a top-level comment on a video on behalf of the authenticated user.
+Post a comment on a video.
 
 **Inputs:**
 ```
-- `video_id` (string, required) — YouTube video ID
-- `text` (string, required) — Comment text content
+- `video_id` (str, required) — YouTube video ID. Required.
+- `text` (str, required) — Comment text content. Required.
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "kind": "youtube#commentThread",
-  "id": "comment-thread-id",
-  "snippet": {
-    "topLevelComment": { "snippet": { "textOriginal": "Great video!", "publishedAt": "..." } }
-  }
-}
-```
-
-</details>
-
-
-### Playlists
-
-<details>
-<summary><code>get_playlist_items</code> — Get videos from a playlist</summary>
-
-Returns the videos inside a specific playlist with snippet and content details.
-
-**Inputs:**
-```
-- `playlist_id` (string, required) — YouTube playlist ID (e.g., PLxxxxxx)
-- `max_results` (int, optional) — Maximum items to return (max: 50, default: 50)
-```
-
-**Output:**
-
-```json
-{
-  "kind": "youtube#playlistItemListResponse",
-  "pageInfo": { "totalResults": 20 },
-  "items": [{
-    "snippet": { "title": "Video Title", "position": 0, "resourceId": { "videoId": "abc123" } }
-  }]
+  kind: string | null;
+  etag: string | null;
+  id: string | null;
+  snippet: object | null;
+  contentDetails: object | null;
+  statistics: object | null;
+  status: object | null;
 }
 ```
 
@@ -315,25 +290,77 @@ Returns the videos inside a specific playlist with snippet and content details.
 
 
 <details>
-<summary><code>create_playlist</code> — Create a new playlist</summary>
+<summary><code>rate_video</code> — Rate a video (like or dislike)</summary>
 
-Creates a new playlist on the authenticated user's channel with a specified title, description, and privacy setting.
+Rate a video (like or dislike).
 
 **Inputs:**
 ```
-- `title` (string, required) — Playlist title
-- `description` (string, optional) — Playlist description (default: "")
-- `privacy_status` (string, optional) — Privacy setting: private, public, or unlisted (default: private)
+- `video_id` (str, required) — YouTube video ID. Required.
+- `rating` ("like" | "dislike" | "none", required) — Rating value: `like`, `dislike`, or `none` (removes rating). Required.
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "kind": "youtube#playlist",
-  "id": "PL...",
-  "snippet": { "title": "My New Playlist", "description": "..." },
-  "status": { "privacyStatus": "private" }
+  message: string;
+}
+```
+
+</details>
+
+
+<details>
+<summary><code>get_playlist_items</code> — Get videos from a specific playlist</summary>
+
+Get videos from a specific playlist.
+
+**Inputs:**
+```
+- `playlist_id` (str, required) — YouTube playlist ID. Required.
+- `max_results` (int, optional, default: 50) — Maximum items to return (capped at 50). Defaults to 50.
+```
+
+**Output `data` schema:**
+
+```typescript
+{
+  kind: string | null;
+  etag: string | null;
+  nextPageToken: string | null;
+  prevPageToken: string | null;
+  items: object[] | null;
+  pageInfo: object | null;
+}
+```
+
+</details>
+
+
+<details>
+<summary><code>create_playlist</code> — Create a new playlist on the authenticated user's channel</summary>
+
+Create a new playlist on the authenticated user's channel.
+
+**Inputs:**
+```
+- `title` (str, required) — Playlist title. Required.
+- `description` (str, optional, default: "") — Optional playlist description. Defaults to empty string.
+- `privacy_status` (str, optional, default: "private") — Privacy setting. Common values: `private`, `public`, `unlisted`. Defaults to `private`.
+```
+
+**Output `data` schema:**
+
+```typescript
+{
+  kind: string | null;
+  etag: string | null;
+  id: string | null;
+  snippet: object | null;
+  contentDetails: object | null;
+  statistics: object | null;
+  status: object | null;
 }
 ```
 
@@ -343,49 +370,25 @@ Creates a new playlist on the authenticated user's channel with a specified titl
 <details>
 <summary><code>add_video_to_playlist</code> — Add a video to a playlist</summary>
 
-Adds an existing video to one of the authenticated user's playlists.
+Add a video to a playlist.
 
 **Inputs:**
 ```
-- `playlist_id` (string, required) — Target playlist ID
-- `video_id` (string, required) — Video ID to add
+- `playlist_id` (str, required) — Target playlist ID. Required.
+- `video_id` (str, required) — Video ID to insert. Required.
 ```
 
-**Output:**
+**Output `data` schema:**
 
-```json
+```typescript
 {
-  "kind": "youtube#playlistItem",
-  "id": "playlist-item-id",
-  "snippet": { "playlistId": "PL...", "resourceId": { "videoId": "abc123" }, "position": 5 }
-}
-```
-
-</details>
-
-
-### Subscriptions
-
-<details>
-<summary><code>subscribe_to_channel</code> — Subscribe to a YouTube channel</summary>
-
-Subscribes the authenticated user to a specified YouTube channel.
-
-**Inputs:**
-```
-- `channel_id` (string, required) — YouTube channel ID to subscribe to (e.g., UCxxxxxx)
-```
-
-**Output:**
-
-```json
-{
-  "kind": "youtube#subscription",
-  "id": "subscription-id",
-  "snippet": {
-    "title": "Channel Name",
-    "resourceId": { "channelId": "UC..." }
-  }
+  kind: string | null;
+  etag: string | null;
+  id: string | null;
+  snippet: object | null;
+  contentDetails: object | null;
+  statistics: object | null;
+  status: object | null;
 }
 ```
 
@@ -395,57 +398,68 @@ Subscribes the authenticated user to a specified YouTube channel.
 ## API Parameters Reference
 
 <details>
-<summary><strong>YouTube ID Formats</strong></summary>
+<summary><strong>Response Envelope</strong></summary>
 
-| Resource | Format | Example |
-|---|---|---|
-| Video ID | 11-character alphanumeric | `dQw4w9WgXcQ` |
-| Channel ID | Starts with `UC` | `UCxxxxxxxxxxxxxxxxxxxxxx` |
-| Playlist ID | Starts with `PL` | `PLxxxxxxxxxxxxxxxxxxxxxx` |
+Every tool returns the same top-level envelope. Only `data` varies per tool.
 
-IDs can be found in YouTube URLs:
+```json
+// Success
+{
+  "success": true,
+  "statusCode": 200,
+  "retriable": false,
+  "retry_after_seconds": null,
+  "error": null,
+  "data": { ... }
+}
+
+// Error
+{
+  "success": false,
+  "statusCode": 400,
+  "retriable": false,
+  "retry_after_seconds": null,
+  "error": { "code": "ERROR_CODE", "message": "description", "details": {} },
+  "data": null
+}
 ```
-Video:    https://youtube.com/watch?v=dQw4w9WgXcQ  → dQw4w9WgXcQ
-Channel:  https://youtube.com/channel/UCxxxxxx      → UCxxxxxx
-Playlist: https://youtube.com/playlist?list=PLxxxxx → PLxxxxx
-```
+
+- `retriable` — `true` when it is safe to retry (rate limit, network error, 503). `false` for validation and auth errors.
+- `retry_after_seconds` — seconds to wait before retrying; present only when `retriable` is `true` and the upstream specifies a delay.
+- `error.code` — machine-readable string: `VALIDATION_ERROR`, `AUTH_ERROR`, `UPSTREAM_ERROR`, `SERVER_ERROR`.
 
 </details>
 
 <details>
-<summary><strong>Search Order Options</strong></summary>
+<summary><strong>Common Parameters</strong></summary>
 
-The `order` parameter in `search_videos` accepts:
-
-- `relevance` — Ranked by relevance to the query (default)
-- `date` — Most recently published first
-- `rating` — Highest rated first
-- `viewCount` — Most viewed first
-- `title` — Alphabetical by title
-- `videoCount` — For channel searches: most videos first
+- `max_results` — Controls the number of items returned. Always capped at the YouTube API maximum for the given endpoint (50 for most resources, 100 for comments).
+- `order` — Controls result ordering. Supported values vary by tool; see each tool's parameter description for the accepted values.
 
 </details>
 
 <details>
-<summary><strong>Privacy Status Options</strong></summary>
+<summary><strong>Resource Formats</strong></summary>
 
-Used in `create_playlist`:
-
-- `private` — Only visible to you (default)
-- `public` — Visible to everyone
-- `unlisted` — Visible to anyone with the link
-
-</details>
-
-<details>
-<summary><strong>Video Duration Format</strong></summary>
-
-Durations in `contentDetails` use ISO 8601 format:
+**Video ID:**
 
 ```
-PT3M33S  → 3 minutes, 33 seconds
-PT1H2M   → 1 hour, 2 minutes
-PT45S    → 45 seconds
+11-character alphanumeric string
+Example: dQw4w9WgXcQ
+```
+
+**Channel ID:**
+
+```
+Starts with "UC" followed by 22 characters
+Example: UCq-Fj5jknLsUf-MWSy4_brA
+```
+
+**Playlist ID:**
+
+```
+Starts with "PL" followed by alphanumeric characters
+Example: PLbpi6ZahtOH6Ar_3GPy3workbp73xONIf
 ```
 
 </details>
@@ -458,8 +472,8 @@ PT45S    → 45 seconds
 
 - **Cause:** OAuth token not provided in request headers or incorrect format
 - **Solution:**
-  1. Verify `Authorization: Bearer YOUR_TOKEN` and `X-Mewcp-Credential-Id: CREDENTIAL-ID` headers are present
-  2. Check your YouTube OAuth credential is active in your MewCP account
+  1. Verify `Authorization: Bearer YOUR_OAUTH_TOKEN` and `X-Mewcp-Credential-Id: CREDENTIAL-ID` headers are present
+  2. Check that your OAuth credential is active in your MewCP account
 
 </details>
 
@@ -480,7 +494,7 @@ PT45S    → 45 seconds
 - **Cause:** No YouTube credential linked to your account
 - **Solution:**
   1. Go to **Credentials** in your MewCP dashboard
-  2. Connect your Google account via OAuth (YouTube scope)
+  2. Connect your Google/YouTube account via OAuth
   3. Retry the request with the correct `X-Mewcp-Credential-Id` header
 
 </details>
@@ -492,7 +506,7 @@ PT45S    → 45 seconds
 - **Solution:**
   1. Validate JSON syntax before sending
   2. Ensure all required tool parameters are included
-  3. Check parameter types match expected values (e.g. `max_results` must be an integer)
+  3. Check parameter types match expected values
 
 </details>
 
@@ -512,17 +526,21 @@ PT45S    → 45 seconds
 
 - **Cause:** Upstream YouTube Data API returned an error
 - **Solution:**
-  1. Check Google service status at [Google Status](https://status.cloud.google.com)
-  2. Verify your OAuth credential has the required YouTube scopes (e.g. `youtube.readonly`, `youtube.force-ssl`)
-  3. Review the error message returned in the response — common errors: `quotaExceeded`, `forbidden`, `videoNotFound`
+  1. Check YouTube service status at [Google Workspace Status](https://www.google.com/appsstatus)
+  2. Verify your OAuth credential has the required YouTube scopes
+  3. Review the error message for specific details
 
 </details>
 
 ---
 
-### Resources
+<details>
+<summary><strong>Resources</strong></summary>
 
-- **[YouTube Data API Documentation](https://developers.google.com/youtube/v3)** — Official API reference
-- **[YouTube Data API Reference](https://developers.google.com/youtube/v3/docs)** — Complete method reference
+- **[YouTube Data API Documentation](https://developers.google.com/youtube/v3/docs)** — Official API reference
+- **[YouTube Data API Reference](https://developers.google.com/youtube/v3/docs/videos/list)** — Complete endpoint reference
 - **[FastMCP Docs](https://gofastmcp.com/v2/getting-started/welcome)** — FastMCP specification
 - **[FastMCP Credentials](https://pypi.org/project/fastmcp-credentials/)** — FastMCP Credentials package for credential handling
+
+
+</details>
