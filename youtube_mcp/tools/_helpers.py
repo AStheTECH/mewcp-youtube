@@ -18,9 +18,8 @@ def _err(result_class, tlog, code, message, status, retriable=False, retry_after
 def _handle_request_exc(result_class, tlog, exc):
     if isinstance(exc, HttpError):
         status = exc.resp.status
-        detail = exc.content.decode() if exc.content else "No details"
-        msg = f"HTTP {status}: {detail}"
         retriable = status in (429, 500, 502, 503)
+        msg = f"HTTP {status}"
         tlog.failure("UPSTREAM_ERROR", msg)
         return result_class(
             success=False, statusCode=status, retriable=retriable,
@@ -37,8 +36,7 @@ def _handle_request_exc(result_class, tlog, exc):
 
 def _upstream_err(result_class, tlog, status, exc, retry_after=None):
     retriable = status in (429, 500, 502, 503)
-    detail = exc.content.decode() if exc.content else "No details"
-    msg = f"HTTP {status}: {detail}"
+    msg = f"HTTP {status}"
     tlog.failure("UPSTREAM_ERROR", msg)
     return result_class(
         success=False, statusCode=status, retriable=retriable,
