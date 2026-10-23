@@ -19,12 +19,18 @@ def _handle_request_exc(result_class, tlog, exc):
     if isinstance(exc, HttpError):
         status = exc.resp.status
         retriable = status in (429, 500, 502, 503)
-        msg = f"HTTP {status}"
+        reason = getattr(exc, "reason", None)
+        msg = f"HTTP {status}: {reason}" if reason else f"HTTP {status}"
+        details = getattr(exc, "error_details", None) or None
         tlog.failure("UPSTREAM_ERROR", msg)
         return result_class(
             success=False, statusCode=status, retriable=retriable,
-            error=ToolError(code="UPSTREAM_ERROR", message=msg),
+            error=ToolError(code="UPSTREAM_ERROR", message=msg, details=details),
         )
+    if isinstance(exc, TypeError):
+        tlog.failure("INVALID_PARAMETER", str(exc))
+        return result_class(success=False, statusCode=400, retriable=False,
+            error=ToolError(code="INVALID_PARAMETER", message=str(exc)))
     if isinstance(exc, ValueError):
         tlog.failure("AUTH_ERROR", str(exc))
         return result_class(success=False, statusCode=401, retriable=False,

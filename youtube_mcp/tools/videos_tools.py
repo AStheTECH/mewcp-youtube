@@ -34,10 +34,10 @@ def register_videos_tools(mcp: FastMCP) -> None:
     )
     def search_videos(
         query: str = Field(..., description="Search query text. Required."),
-        max_results: int = Field(default=10, description="Maximum videos to return (capped at 50). Defaults to 10."),
-        order: str = Field(
+        max_results: int = Field(default=10, ge=1, description="Maximum videos to return (capped at 50). Defaults to 10."),
+        order: Literal["relevance", "date", "rating", "title", "videoCount", "viewCount"] = Field(
             default="relevance",
-            description="Sort order. Common values: `relevance`, `date`, `rating`, `title`, `videoCount`, `viewCount`. Defaults to `relevance`.",
+            description="Sort order. Defaults to `relevance`.",
         ),
     ) -> SearchVideosResult:
         tlog = ToolLogger(logger, "search_videos")
@@ -84,7 +84,7 @@ def register_videos_tools(mcp: FastMCP) -> None:
     )
     def get_channel_videos(
         channel_id: str = Field(..., description="YouTube channel ID. Required."),
-        max_results: int = Field(default=25, description="Maximum videos to return (capped at 50). Defaults to 25."),
+        max_results: int = Field(default=25, ge=1, description="Maximum videos to return (capped at 50). Defaults to 25."),
     ) -> GetChannelVideosResult:
         tlog = ToolLogger(logger, "get_channel_videos")
         try:
@@ -109,10 +109,10 @@ def register_videos_tools(mcp: FastMCP) -> None:
     )
     def get_video_comments(
         video_id: str = Field(..., description="YouTube video ID. Required."),
-        max_results: int = Field(default=20, description="Maximum comments to return (capped at 100). Defaults to 20."),
-        order: str = Field(
+        max_results: int = Field(default=20, ge=1, description="Maximum comments to return (capped at 100). Defaults to 20."),
+        order: Literal["relevance", "time"] = Field(
             default="relevance",
-            description="Comment order. Supported values: `relevance`, `time`. Defaults to `relevance`.",
+            description="Comment order. Defaults to `relevance`.",
         ),
     ) -> GetVideoCommentsResult:
         tlog = ToolLogger(logger, "get_video_comments")
