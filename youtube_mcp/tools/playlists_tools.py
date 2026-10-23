@@ -1,6 +1,7 @@
 """Playlists group: get_playlist_items, create_playlist, add_video_to_playlist."""
 
 import logging
+from typing import Literal
 
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
@@ -32,7 +33,7 @@ def register_playlists_tools(mcp: FastMCP) -> None:
     def get_playlist_items(
         playlist_id: str = Field(..., description="YouTube playlist ID. Required."),
         max_results: int = Field(
-            default=50, description="Maximum items to return (capped at 50). Defaults to 50."
+            default=50, ge=1, description="Maximum items to return (capped at 50). Defaults to 50."
         ),
     ) -> GetPlaylistItemsResult:
         tlog = ToolLogger(logger, "get_playlist_items")
@@ -62,9 +63,9 @@ def register_playlists_tools(mcp: FastMCP) -> None:
         description: str = Field(
             default="", description="Optional playlist description. Defaults to empty string."
         ),
-        privacy_status: str = Field(
+        privacy_status: Literal["private", "public", "unlisted"] = Field(
             default="private",
-            description="Privacy setting. Common values: `private`, `public`, `unlisted`. Defaults to `private`.",
+            description="Privacy setting. Defaults to `private`.",
         ),
     ) -> CreatePlaylistResult:
         tlog = ToolLogger(logger, "create_playlist")

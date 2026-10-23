@@ -8,9 +8,13 @@ from mcp.types import ToolAnnotations
 from pydantic import Field
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import (
-    NoTranscriptFound,
+    AgeRestricted,
+    InvalidVideoId,
+    IpBlocked,
+    RequestBlocked,
     TranscriptsDisabled,
     VideoUnavailable,
+    VideoUnplayable,
 )
 
 from ..logging_utils import ToolLogger
@@ -25,6 +29,31 @@ from ..schemas import (
 )
 
 logger = logging.getLogger("youtube-mcp.tools.transcripts")
+
+_ERRORS = (
+    (TranscriptsDisabled, "TRANSCRIPTS_DISABLED", 403, False, "Transcripts are disabled for this video"),
+    (InvalidVideoId, "INVALID_VIDEO_ID", 400, False, "Invalid video ID; pass the 11-character ID, not a URL"),
+    (VideoUnavailable, "VIDEO_UNAVAILABLE", 404, False, "Video is unavailable"),
+    (AgeRestricted, "AGE_RESTRICTED", 403, False, "Video is age-restricted and its transcript cannot be fetched"),
+    (VideoUnplayable, "VIDEO_UNPLAYABLE", 403, False, "Video is not playable, so no transcript can be fetched"),
+    (IpBlocked, "UPSTREAM_BLOCKED", 429, True, "YouTube blocked the transcript request from this server's IP"),
+    (RequestBlocked, "UPSTREAM_BLOCKED", 429, True, "YouTube blocked the transcript request"),
+)
+
+
+def _transcript_failure(result_class, tlog, exc):
+    for exc_type, code, status, retriable, msg in _ERRORS:
+        if isinstance(exc, exc_type):
+            tlog.failure(code, msg)
+            return result_class(
+                success=False, statusCode=status, retriable=retriable,
+                error=ToolError(code=code, message=msg),
+            )
+    tlog.failure("SERVER_ERROR", str(exc))
+    return result_class(
+        success=False, statusCode=500, retriable=False,
+        error=ToolError(code="SERVER_ERROR", message=str(exc)),
+    )
 
 
 def register_transcripts_tools(mcp: FastMCP) -> None:
@@ -51,59 +80,39 @@ def register_transcripts_tools(mcp: FastMCP) -> None:
     ) -> GetVideoTranscriptResult:
         tlog = ToolLogger(logger, "get_video_transcript")
         try:
-            kwargs = {"languages": languages} if languages else {}
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-
+            transcript_list = YouTubeTranscriptApi().list(video_id)
+            transcript = None
             if languages:
                 try:
                     transcript = transcript_list.find_transcript(languages)
-                except NoTranscriptFound:
-                    transcript = transcript_list.find_generated_transcript(languages)
-            else:
-                transcript = next(iter(transcript_list))
+                except Exception:
+                    transcript = None
+            if transcript is None:
+                transcript = next(iter(transcript_list), None)
+            if transcript is None:
+                msg = "No transcript available for this video"
+                tlog.failure("NO_TRANSCRIPT_FOUND", msg)
+                return GetVideoTranscriptResult(
+                    success=False, statusCode=404, retriable=False,
+                    error=ToolError(code="NO_TRANSCRIPT_FOUND", message=msg),
+                )
 
-            raw = transcript.fetch()
+            fetched = transcript.fetch()
             segments = [
-                TranscriptSegment(text=s["text"], start=s["start"], duration=s["duration"])
-                for s in raw
+                TranscriptSegment(text=s.text, start=s.start, duration=s.duration)
+                for s in fetched
             ]
-            full_text = " ".join(s["text"] for s in raw)
             data = TranscriptData(
                 video_id=video_id,
                 language=transcript.language,
                 is_generated=transcript.is_generated,
                 segments=segments,
-                full_text=full_text,
+                full_text=" ".join(s.text for s in fetched),
             )
             tlog.success()
             return GetVideoTranscriptResult(success=True, statusCode=200, data=data)
-        except TranscriptsDisabled:
-            msg = "Transcripts are disabled for this video"
-            tlog.failure("TRANSCRIPTS_DISABLED", msg)
-            return GetVideoTranscriptResult(
-                success=False, statusCode=403, retriable=False,
-                error=ToolError(code="TRANSCRIPTS_DISABLED", message=msg),
-            )
-        except NoTranscriptFound:
-            msg = f"No transcript found for language(s): {languages}"
-            tlog.failure("NO_TRANSCRIPT_FOUND", msg)
-            return GetVideoTranscriptResult(
-                success=False, statusCode=404, retriable=False,
-                error=ToolError(code="NO_TRANSCRIPT_FOUND", message=msg),
-            )
-        except VideoUnavailable:
-            msg = f"Video {video_id} is unavailable"
-            tlog.failure("VIDEO_UNAVAILABLE", msg)
-            return GetVideoTranscriptResult(
-                success=False, statusCode=404, retriable=False,
-                error=ToolError(code="VIDEO_UNAVAILABLE", message=msg),
-            )
         except Exception as e:
-            tlog.failure("SERVER_ERROR", str(e))
-            return GetVideoTranscriptResult(
-                success=False, statusCode=500, retriable=False,
-                error=ToolError(code="SERVER_ERROR", message=str(e)),
-            )
+            return _transcript_failure(GetVideoTranscriptResult, tlog, e)
 
     @mcp.tool(
         name="list_video_transcripts",
@@ -119,7 +128,7 @@ def register_transcripts_tools(mcp: FastMCP) -> None:
     ) -> ListVideoTranscriptsResult:
         tlog = ToolLogger(logger, "list_video_transcripts")
         try:
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+            transcript_list = YouTubeTranscriptApi().list(video_id)
             tracks = [
                 TranscriptTrack(
                     language=t.language,
@@ -132,23 +141,5 @@ def register_transcripts_tools(mcp: FastMCP) -> None:
             data = TranscriptListData(video_id=video_id, tracks=tracks)
             tlog.success()
             return ListVideoTranscriptsResult(success=True, statusCode=200, data=data)
-        except TranscriptsDisabled:
-            msg = "Transcripts are disabled for this video"
-            tlog.failure("TRANSCRIPTS_DISABLED", msg)
-            return ListVideoTranscriptsResult(
-                success=False, statusCode=403, retriable=False,
-                error=ToolError(code="TRANSCRIPTS_DISABLED", message=msg),
-            )
-        except VideoUnavailable:
-            msg = f"Video {video_id} is unavailable"
-            tlog.failure("VIDEO_UNAVAILABLE", msg)
-            return ListVideoTranscriptsResult(
-                success=False, statusCode=404, retriable=False,
-                error=ToolError(code="VIDEO_UNAVAILABLE", message=msg),
-            )
         except Exception as e:
-            tlog.failure("SERVER_ERROR", str(e))
-            return ListVideoTranscriptsResult(
-                success=False, statusCode=500, retriable=False,
-                error=ToolError(code="SERVER_ERROR", message=str(e)),
-            )
+            return _transcript_failure(ListVideoTranscriptsResult, tlog, e)
